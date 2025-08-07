@@ -1,0 +1,7 @@
+# .gitignore (root level)
+node_modules
+.env
+.env.*.local
+uploads/
+dist/
+.DS_Store
