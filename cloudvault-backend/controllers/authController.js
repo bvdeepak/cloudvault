@@ -1,10 +1,9 @@
-// cloudvault-backend/controllers/authController.js
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const sendEmail = require('../utils/sendEmail'); // you'll need to set this up
+const sendEmail = require('../utils/sendEmail'); // Make sure this file and function exist
 
-
+// ✅ Register New User
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -20,6 +19,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// ✅ Login User
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -36,29 +36,39 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// ✅ Forgot Password: Send Reset Link
 exports.forgotPassword = async (req, res) => {
-  const { email } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-  const resetLink = `https://cloudvault-frontend.vercel.app/reset-password/${token}`;
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const resetLink = `https://cloudvault-frontend.vercel.app/reset-password/${token}`;
 
-  await sendEmail(user.email, 'Reset Password', `Click here: ${resetLink}`);
+    await sendEmail(user.email, 'Reset Password', `Click here to reset your password: ${resetLink}`);
 
-  res.json({ message: 'Reset link sent!' });
+    res.json({ message: 'Reset link sent!' });
+  } catch (err) {
+    console.error('Forgot Password Error:', err);
+    res.status(500).json({ message: 'Error sending reset link' });
+  }
 };
 
+// ✅ Reset Password: Save New Password
 exports.resetPassword = async (req, res) => {
   try {
     const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    user.password = req.body.password; // hash middleware runs
+    const hashedPassword = await bcrypt.hash(req.body.password, 10);
+    user.password = hashedPassword;
     await user.save();
+
     res.json({ message: "Password updated successfully" });
   } catch (err) {
+    console.error('Reset Password Error:', err);
     res.status(400).json({ message: "Invalid or expired token" });
   }
 };
