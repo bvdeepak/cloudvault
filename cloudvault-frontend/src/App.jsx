@@ -7,6 +7,8 @@ import PrivateRoute from "./utils/PrivateRoute";
 import { ToastContainer } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
 import SharePage from './pages/SharePage'; // or wherever your Share component is
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 
 
 function App() {
@@ -19,6 +21,8 @@ function App() {
         <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/share/:id" element={<SharePage />} />
           <Route path="/share-secure/:id" element={<SharePage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+<Route path="/reset-password/:token" element={<ResetPassword />} />
 
 
       </Routes>

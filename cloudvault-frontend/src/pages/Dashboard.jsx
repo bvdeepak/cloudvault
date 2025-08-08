@@ -29,7 +29,7 @@ const Dashboard = () => {
     formData.append("file", file);
 
     try {
-      await axios.post(`${import.meta.env.VITE_API_URL}/files/upload`, formData, {
+      await axios.post(`${import.meta.env.VITE_API_URL}/files/uploads`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
