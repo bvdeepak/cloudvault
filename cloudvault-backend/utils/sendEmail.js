@@ -1,27 +1,21 @@
-import nodemailer from 'nodemailer';
+const nodemailer = require('nodemailer');
 
-export const sendEmail = async (to, subject, text) => {
-  try {
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
-      secure: false, // true for port 465
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
+const sendEmail = async (to, subject, text) => {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
 
-    await transporter.sendMail({
-      from: `"CloudVault" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      text,
-    });
-
-    console.log(`✅ Email sent to ${to}`);
-  } catch (error) {
-    console.error("❌ Failed to send email:", error);
-    throw error;
-  }
+  await transporter.sendMail({
+    from: process.env.FROM_EMAIL,
+    to,
+    subject,
+    text,
+  });
 };
+
+module.exports = sendEmail;
