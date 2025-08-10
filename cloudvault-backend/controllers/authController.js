@@ -41,24 +41,24 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (user) {
-      const resetToken = jwt.sign({ id: user._id }, process.env.JWT_RESET_SECRET, { expiresIn: '15m' });
-      const resetLink = `${process.env.FRONTEND_URL.replace(/\/$/, '')}/reset-password/${resetToken}`;
-      await sendEmail(user.email, 'Reset Password', `Click here to reset your password: ${resetLink}`);
-    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const resetLink = `https://cloudvault-frontend.vercel.app/reset-password/${token}`;
 
-    return res.json({ message: 'If an account with that email exists, a reset link has been sent.' });
+    await sendEmail(user.email, 'Reset Password', `Click here to reset your password: ${resetLink}`);
+
+    res.json({ message: 'Reset link sent!' });
   } catch (err) {
     console.error('Forgot Password Error:', err);
-    return res.status(500).json({ message: 'Error processing request' });
+    res.status(500).json({ message: 'Error sending reset link' });
   }
 };
 
 // ✅ Reset Password: Save New Password
 exports.resetPassword = async (req, res) => {
   try {
-const decoded = jwt.verify(req.params.token, process.env.JWT_RESET_SECRET);
+    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
