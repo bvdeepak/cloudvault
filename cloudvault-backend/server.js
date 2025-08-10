@@ -10,6 +10,20 @@ const fileRoutes = require('./routes/fileRoutes');
 
 dotenv.config();
 
+const requiredEnv = [
+  'MONGO_URI',
+  'JWT_SECRET',
+  'JWT_RESET_SECRET',
+  'SMTP_USER',
+  'SMTP_PASS',
+  'FRONTEND_URL'
+];
+const missing = requiredEnv.filter(k => !process.env[k]);
+if (missing.length) {
+  console.error('Missing required env vars:', missing);
+  process.exit(1);
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
