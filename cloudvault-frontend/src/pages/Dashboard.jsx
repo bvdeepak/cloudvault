@@ -11,8 +11,19 @@ const Dashboard = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const token = localStorage.getItem("token");
 
-  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-  const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'text/plain', 'video/mp4'];
+  // Match backend: 50MB limit + updated allowed types
+  const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
+  const ALLOWED_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'application/pdf',
+    'text/plain',
+    'video/mp4',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+    'application/msword', // doc
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+    'application/vnd.ms-powerpoint' // ppt
+  ];
 
   const fetchFiles = async () => {
     try {
@@ -28,7 +39,7 @@ const Dashboard = () => {
   const uploadFile = async (e) => {
     e.preventDefault();
     if (!file) return toast.warning("No file selected");
-    if (file.size > MAX_FILE_SIZE) return toast.error("File too large (max 10 MB)");
+    if (file.size > MAX_FILE_SIZE) return toast.error("File too large (max 50 MB)");
     if (!ALLOWED_TYPES.includes(file.type)) return toast.error("Invalid file type");
 
     const formData = new FormData();
@@ -79,11 +90,18 @@ const Dashboard = () => {
       <Navbar />
       <div className="p-4 max-w-2xl mx-auto">
         <form onSubmit={uploadFile} className="mb-4 flex flex-col sm:flex-row gap-2">
-          <input type="file" onChange={(e) => setFile(e.target.files[0])} className="w-full" />
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png,.pdf,.txt,.mp4,.doc,.docx,.ppt,.pptx"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="w-full"
+          />
           <button type="submit" className="btn">Upload</button>
         </form>
 
-        {uploadProgress > 0 && <p className="text-sm text-gray-600 mb-2">Uploading: {uploadProgress}%</p>}
+        {uploadProgress > 0 && (
+          <p className="text-sm text-gray-600 mb-2">Uploading: {uploadProgress}%</p>
+        )}
 
         <input
           type="text"
