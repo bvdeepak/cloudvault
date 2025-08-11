@@ -35,7 +35,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Serve uploaded files
-// app.use('/uploads', express.static(uploadsDir));
+app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth', authRoutes);
