@@ -38,7 +38,11 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ storage, fileFilter });
+const upload = multer({ 
+  storage, 
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB limit — change if you want
+});
 
 // ✅ Routes
 router.post('/upload', authMiddleware, upload.single('file'), asyncHandler(uploadFile));
@@ -76,6 +80,21 @@ router.get('/shared-secure/:token', asyncHandler(async (req, res) => {
     const file = await File.findById(fileId);
     if (!file) return res.status(404).json({ error: 'File not found' });
     res.json(file);
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+}));
+
+router.get('/shared-secure/download/:token', asyncHandler(async (req, res) => {
+  try {
+    const { fileId } = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    const file = await File.findById(fileId);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    const filePath = path.join(__dirname, '../uploads', file.filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File missing' });
+
+    res.download(filePath, file.originalname);
   } catch (err) {
     res.status(401).json({ error: 'Invalid or expired token' });
   }

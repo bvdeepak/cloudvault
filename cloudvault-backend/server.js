@@ -8,11 +8,25 @@ const fs = require('fs'); // 👈 Add this line
 const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 
+const rateLimit = require('express-rate-limit');
+
+// Limit repeated requests to auth endpoints
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // limit each IP to 10 requests per windowMs
+  message: { message: 'Too many requests. Try again later.' }
+});
+
+
+
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.use('/api/auth', authLimiter);
+
 
 // ✅ Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -21,7 +35,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 
 // Serve uploaded files
-app.use('/uploads', express.static(uploadsDir));
+// app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth', authRoutes);
