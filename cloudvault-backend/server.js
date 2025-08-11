@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
-const fs = require('fs'); // 👈 Add this line
+const fs = require('fs');
+
+// load env early
+dotenv.config();
 
 const authRoutes = require('./routes/authRoutes');
 const fileRoutes = require('./routes/fileRoutes');
@@ -17,30 +20,32 @@ const authLimiter = rateLimit({
   message: { message: 'Too many requests. Try again later.' }
 });
 
-
-
-dotenv.config();
-
 const app = express();
-app.use(cors());
+
+// CORS - restrict in production
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+app.use(cors({ origin: FRONTEND_URL }));
 app.use(express.json());
 
-app.use('/api/auth', authLimiter);
+// Routes
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/files', fileRoutes);
 
-
-// ✅ Ensure uploads directory exists
+// Ensure uploads directory exists and serve it (careful: this is public)
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
-
-// Serve uploaded files
 app.use('/uploads', express.static(uploadsDir));
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api', fileRoutes); // optional fallback route
+// Global error handler (captures asyncHandler and multer errors)
+app.use((err, req, res, next) => {
+  console.error('Global Error Handler:', err);
+  if (err.name === 'MulterError') {
+    return res.status(400).json({ message: err.message });
+  }
+  res.status(err.status || 500).json({ message: err.message || 'Server Error' });
+});
 
 // DB & server start
 mongoose.connect(process.env.MONGO_URI, {
@@ -49,8 +54,9 @@ mongoose.connect(process.env.MONGO_URI, {
 })
 .then(() => {
   console.log('MongoDB connected');
-  app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+  const port = process.env.PORT || 5000;
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
   });
 })
 .catch(err => console.error(err));

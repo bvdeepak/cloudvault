@@ -3,7 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const sendEmail = require('../utils/sendEmail'); // Make sure this file and function exist
 
-// ✅ Register New User
+// Register New User
 exports.registerUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -19,7 +19,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
-// ✅ Login User
+// Login User
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -36,15 +36,19 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ✅ Forgot Password: Send Reset Link
+// Forgot Password: Send Reset Link (uses separate reset secret)
 exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const resetLink = `https://cloudvault-frontend.vercel.app/reset-password/${token}`;
+    // Use distinct secret for reset tokens if available
+    const resetSecret = process.env.JWT_RESET_SECRET || process.env.JWT_SECRET;
+    const token = jwt.sign({ id: user._id }, resetSecret, { expiresIn: '15m' });
+
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const resetLink = `${frontendUrl.replace(/\/$/, '')}/reset-password/${token}`;
 
     await sendEmail(user.email, 'Reset Password', `Click here to reset your password: ${resetLink}`);
 
@@ -55,10 +59,11 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
-// ✅ Reset Password: Save New Password
+// Reset Password: Save New Password
 exports.resetPassword = async (req, res) => {
   try {
-    const decoded = jwt.verify(req.params.token, process.env.JWT_SECRET);
+    const resetSecret = process.env.JWT_RESET_SECRET || process.env.JWT_SECRET;
+    const decoded = jwt.verify(req.params.token, resetSecret);
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 

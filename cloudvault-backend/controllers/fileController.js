@@ -1,5 +1,3 @@
-// cloudvault-backend/controllers/fileController.js
-
 const File = require('../models/File');
 const path = require('path');
 const fs = require('fs');
@@ -28,6 +26,8 @@ exports.downloadFile = async (req, res) => {
   if (!file) return res.status(404).json({ message: 'File not found' });
 
   const filePath = path.join(__dirname, '../uploads', file.filename);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ message: 'File missing' });
+
   res.download(filePath, file.originalname);
 };
 
@@ -37,8 +37,6 @@ exports.deleteFile = async (req, res) => {
   if (!file) return res.status(404).json({ message: 'File not found' });
 
   const filePath = path.join(__dirname, '../uploads', file.filename);
-
-  // ✅ Check if file exists before deleting
   if (fs.existsSync(filePath)) {
     fs.unlinkSync(filePath);
   }

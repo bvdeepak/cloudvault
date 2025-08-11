@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -29,17 +28,15 @@ const Login = () => {
         <input name="email" type="email" placeholder="Email" className="input" onChange={handleChange} required />
         <input name="password" type="password" placeholder="Password" className="input mt-2" onChange={handleChange} required />
         <button type="submit" className="btn mt-4 w-full">Login</button>
-        
-        {/* Register Link */}
         <p className="text-sm text-center mt-4">
           Don't have an account?{' '}
           <Link to="/register" className="text-blue-600 hover:underline">Register</Link>
         </p>
         <p className="text-right mt-2">
-  <Link to="/forgot-password" className="text-blue-500 hover:underline">
-    Forgot Password?
-  </Link>
-</p>
+          <Link to="/forgot-password" className="text-blue-500 hover:underline">
+            Forgot Password?
+          </Link>
+        </p>
       </form>
     </div>
   );

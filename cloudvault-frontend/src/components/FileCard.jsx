@@ -25,18 +25,18 @@ const FileCard = ({ file, onDelete }) => {
     }
   };
 
- const previewFile = async () => {
-  try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/files/download/${file._id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: 'blob'
-    });
-    const url = window.URL.createObjectURL(new Blob([res.data], { type: file.mimetype }));
-    window.open(url, '_blank');
-  } catch (err) {
-    toast.error("Preview failed");
-  }
-};
+  const previewFile = async () => {
+    try {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/files/download/${file._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: file.mimetype }));
+      window.open(url, '_blank');
+    } catch (err) {
+      toast.error("Preview failed");
+    }
+  };
 
   const copyShareLink = () => {
     const shareLink = `${window.location.origin}/share/${file._id}`;
@@ -68,6 +68,7 @@ const FileCard = ({ file, onDelete }) => {
     if (mimetype.startsWith("image")) return "🖼️";
     if (mimetype === "application/pdf") return "📄";
     if (mimetype === "text/plain") return "📃";
+    if (mimetype.startsWith("video")) return "🎥";
     return "📁";
   };
 

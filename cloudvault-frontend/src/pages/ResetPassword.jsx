@@ -15,7 +15,7 @@ const ResetPassword = () => {
       toast.success('Password updated');
       navigate('/login');
     } catch (err) {
-      toast.error("Invalid or expired token");
+      toast.error(err.response?.data?.message || "Invalid or expired token");
     }
   };
 

@@ -1,4 +1,3 @@
-// src/pages/Register.jsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -29,8 +28,6 @@ const Register = () => {
         <input name="email" type="email" placeholder="Email" className="input mt-2" onChange={handleChange} required />
         <input name="password" type="password" placeholder="Password" className="input mt-2" onChange={handleChange} required />
         <button type="submit" className="btn mt-4 w-full">Register</button>
-
-        {/* Login Link */}
         <p className="text-sm text-center mt-4">
           Already have an account?{' '}
           <Link to="/login" className="text-blue-600 hover:underline">Login</Link>

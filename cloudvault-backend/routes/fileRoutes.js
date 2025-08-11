@@ -1,5 +1,3 @@
-// cloudvault-backend/routes/fileRoutes.js
-
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -15,11 +13,11 @@ const {
 } = require('../controllers/fileController');
 
 const authMiddleware = require('../middleware/authMiddleware');
-const asyncHandler = require('../utils/asyncHandler'); // ✅ Cleaner error handling
+const asyncHandler = require('../utils/asyncHandler');
 
 const router = express.Router();
 
-// ✅ Storage engine with filename sanitization
+// Storage engine
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
@@ -28,7 +26,6 @@ const storage = multer.diskStorage({
   }
 });
 
-// ✅ File type filter
 const fileFilter = (req, file, cb) => {
   const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'text/plain', 'video/mp4'];
   if (allowedTypes.includes(file.mimetype)) {
@@ -38,32 +35,55 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const upload = multer({ 
-  storage, 
+const upload = multer({
+  storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB limit — change if you want
+  limits: { fileSize: 10 * 1024 * 1024 }
 });
 
-// ✅ Routes
+// Auth-protected file routes
 router.post('/upload', authMiddleware, upload.single('file'), asyncHandler(uploadFile));
 router.get('/', authMiddleware, asyncHandler(getFiles));
 router.get('/download/:id', authMiddleware, asyncHandler(downloadFile));
 router.delete('/:id', authMiddleware, asyncHandler(deleteFile));
 
-// ✅ Public share access (basic)
-// GET /api/files/shared/:id
-router.get('/shared/:id', async (req, res) => {
+// Public share access (safe DTO)
+router.get('/shared/:id', asyncHandler(async (req, res) => {
   try {
     const file = await File.findById(req.params.id);
     if (!file) return res.status(404).json({ error: 'File not found' });
-    res.json(file);
+
+    const safeFile = {
+      id: file._id,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      createdAt: file.createdAt
+    };
+    res.json(safeFile);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
-});
+}));
 
-// ✅ Generate secure share token
+// Public download for shared (streams file)
+router.get('/shared/download/:id', asyncHandler(async (req, res) => {
+  try {
+    const file = await File.findById(req.params.id);
+    if (!file) return res.status(404).json({ error: 'File not found' });
+
+    const filePath = path.join(__dirname, '../uploads', file.filename);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File missing' });
+
+    return res.download(filePath, file.originalname);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
+}));
+
+// Generate secure share token
 router.get('/generate-share-token/:id', authMiddleware, asyncHandler(async (req, res) => {
   const token = jwt.sign(
     { fileId: req.params.id },
@@ -73,18 +93,27 @@ router.get('/generate-share-token/:id', authMiddleware, asyncHandler(async (req,
   res.json({ token });
 }));
 
-// ✅ Access shared file via secure token
+// Access shared file via secure token
 router.get('/shared-secure/:token', asyncHandler(async (req, res) => {
   try {
     const { fileId } = jwt.verify(req.params.token, process.env.JWT_SECRET);
     const file = await File.findById(fileId);
     if (!file) return res.status(404).json({ error: 'File not found' });
-    res.json(file);
+
+    const safeFile = {
+      id: file._id,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      size: file.size,
+      createdAt: file.createdAt
+    };
+    res.json(safeFile);
   } catch (err) {
     res.status(401).json({ error: 'Invalid or expired token' });
   }
 }));
 
+// Secure download via token
 router.get('/shared-secure/download/:token', asyncHandler(async (req, res) => {
   try {
     const { fileId } = jwt.verify(req.params.token, process.env.JWT_SECRET);
