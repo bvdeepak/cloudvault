@@ -27,6 +27,7 @@ const SharePage = () => {
         className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
         onClick={() =>
           window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/${file.filename}`, '_blank')
+          
         }
       >
         Preview File

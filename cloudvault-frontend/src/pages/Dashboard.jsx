@@ -10,6 +10,9 @@ const Dashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
   const token = localStorage.getItem("token");
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf', 'text/plain'];
+
 
   const fetchFiles = async () => {
     try {
@@ -25,6 +28,12 @@ const Dashboard = () => {
   const uploadFile = async (e) => {
     e.preventDefault();
     if (!file) return toast.warning("No file selected");
+    if (file.size > MAX_FILE_SIZE) {
+  return toast.error("File too large (max 10 MB)");
+}
+if (!ALLOWED_TYPES.includes(file.type)) {
+  return toast.error("Invalid file type");
+}
     const formData = new FormData();
     formData.append("file", file);
 

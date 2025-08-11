@@ -25,9 +25,18 @@ const FileCard = ({ file, onDelete }) => {
     }
   };
 
-  const previewFile = () => {
-    window.open(`${import.meta.env.VITE_API_URL.replace('/api', '')}/uploads/${file.filename}`, '_blank');
-  };
+ const previewFile = async () => {
+  try {
+    const res = await axios.get(`${import.meta.env.VITE_API_URL}/files/download/${file._id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: 'blob'
+    });
+    const url = window.URL.createObjectURL(new Blob([res.data], { type: file.mimetype }));
+    window.open(url, '_blank');
+  } catch (err) {
+    toast.error("Preview failed");
+  }
+};
 
   const copyShareLink = () => {
     const shareLink = `${window.location.origin}/share/${file._id}`;
