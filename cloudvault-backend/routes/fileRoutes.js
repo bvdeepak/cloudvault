@@ -18,6 +18,7 @@ const asyncHandler = require('../utils/asyncHandler');
 const router = express.Router();
 
 // Storage engine
+// Multer setup with better error handling
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/'),
   filename: (req, file, cb) => {
@@ -26,8 +27,19 @@ const storage = multer.diskStorage({
   }
 });
 
+const allowedTypes = [
+  'image/jpeg',
+  'image/png',
+  'application/pdf',
+  'text/plain',
+  'video/mp4',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // docx
+  'application/msword', // doc
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation', // pptx
+  'application/vnd.ms-powerpoint' // ppt
+];
+
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf', 'text/plain', 'video/mp4'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
@@ -38,11 +50,25 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
+  limits: { fileSize: 50 * 1024 * 1024 } // 50 MB
 });
 
+// Wrapper to catch Multer errors
+const uploadMiddleware = (req, res, next) => {
+  upload.single('file')(req, res, function (err) {
+    if (err instanceof multer.MulterError) {
+      return res.status(400).json({ message: err.message });
+    } else if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
+
 // Auth-protected file routes
-router.post('/upload', authMiddleware, upload.single('file'), asyncHandler(uploadFile));
+// router.post('/upload', authMiddleware, upload.single('file'), asyncHandler(uploadFile));
+router.post('/upload', authMiddleware, uploadMiddleware, asyncHandler(uploadFile));
+
 router.get('/', authMiddleware, asyncHandler(getFiles));
 router.get('/download/:id', authMiddleware, asyncHandler(downloadFile));
 router.delete('/:id', authMiddleware, asyncHandler(deleteFile));
